@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # Local apps
     "core",
+    "accounts"
 ]
 
 MIDDLEWARE = [
@@ -106,6 +107,7 @@ DATABASES = {
     "default": env.db("DATABASE_URL")
 }
 
+AUTH_USER_MODEL = "accounts.User"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
