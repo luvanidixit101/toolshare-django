@@ -228,3 +228,10 @@ class ChangePasswordSerializer(serializers.Serializer):
             ) from exc
 
         return attrs
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.strip().lower()

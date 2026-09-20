@@ -4,12 +4,17 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .services import change_user_password
+
+from .services import (
+    change_user_password,
+    request_password_reset,
+)
 
 from .serializers import (
     ChangePasswordSerializer,
     LoginSerializer,
     LogoutSerializer,
+    PasswordResetRequestSerializer,
     RegisterSerializer,
     UserProfileSerializer,
     UserProfileUpdateSerializer,
@@ -115,6 +120,30 @@ class ChangePasswordAPIView(generics.GenericAPIView):
                 "message": (
                     "Password changed successfully. "
                     "Please login again."
+                )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetRequestAPIView(generics.GenericAPIView):
+    serializer_class = PasswordResetRequestSerializer
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        request_password_reset(
+            email=serializer.validated_data["email"]
+        )
+
+        return Response(
+            {
+                "message": (
+                    "If an account exists with this email, "
+                    "password reset instructions have been sent."
                 )
             },
             status=status.HTTP_200_OK,
