@@ -131,3 +131,32 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "date_joined",
         )
         read_only_fields = fields
+
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "first_name",
+            "last_name",
+        )
+
+    def validate_first_name(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "First name cannot be empty."
+            )
+
+        return value
+
+    def validate_last_name(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "Last name cannot be empty."
+            )
+
+        return value

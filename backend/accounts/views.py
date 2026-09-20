@@ -10,6 +10,7 @@ from .serializers import (
     LogoutSerializer,
     RegisterSerializer,
     UserProfileSerializer,
+    UserProfileUpdateSerializer,
 )
 
 
@@ -66,6 +67,28 @@ class MeAPIView(APIView):
         return Response(
             {
                 "user": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def patch(self, request):
+        serializer = UserProfileUpdateSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        response_serializer = UserProfileSerializer(
+            request.user,
+        )
+
+        return Response(
+            {
+                "message": "Profile updated successfully.",
+                "user": response_serializer.data,
             },
             status=status.HTTP_200_OK,
         )
