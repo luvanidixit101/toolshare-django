@@ -31,3 +31,5 @@ Thumbs.db
 .ruff_cache/
 .coverage
 htmlcov/
+
+superuser_details.txt
