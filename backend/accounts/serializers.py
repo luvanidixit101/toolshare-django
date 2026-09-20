@@ -117,3 +117,17 @@ class LogoutSerializer(serializers.Serializer):
             ) from exc
 
         return value
+    
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "role",
+            "date_joined",
+        )
+        read_only_fields = fields

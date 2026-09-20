@@ -9,6 +9,7 @@ from .serializers import (
     LoginSerializer,
     LogoutSerializer,
     RegisterSerializer,
+    UserProfileSerializer,
 )
 
 
@@ -53,5 +54,19 @@ class LogoutAPIView(APIView):
 
         return Response(
             status=status.HTTP_204_NO_CONTENT,
+        )
+
+
+class MeAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+
+        return Response(
+            {
+                "user": serializer.data,
+            },
+            status=status.HTTP_200_OK,
         )
 # Create your views here.
