@@ -2,8 +2,9 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import RegisterSerializer
+from .serializers import LoginSerializer,RegisterSerializer
 
 
 class RegisterAPIView(generics.CreateAPIView):
@@ -31,4 +32,8 @@ class RegisterAPIView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED,
         )
 
+class LoginAPIView(TokenObtainPairView):
+    serializer_class = LoginSerializer
+    permission_classes = ()
+    authentication_classes = () 
 # Create your views here.
