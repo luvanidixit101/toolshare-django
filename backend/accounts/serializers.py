@@ -160,3 +160,71 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             )
 
         return value
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+
+    new_password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+
+    new_password_confirm = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+
+        current_password = attrs["current_password"]
+        new_password = attrs["new_password"]
+        new_password_confirm = attrs["new_password_confirm"]
+
+        if not user.check_password(current_password):
+            raise serializers.ValidationError(
+                {
+                    "current_password": (
+                        "Current password is incorrect."
+                    )
+                }
+            )
+
+        if new_password != new_password_confirm:
+            raise serializers.ValidationError(
+                {
+                    "new_password_confirm": (
+                        "New password and confirmation password do not match."
+                    )
+                }
+            )
+
+        if user.check_password(new_password):
+            raise serializers.ValidationError(
+                {
+                    "new_password": (
+                        "New password must be different from the current password."
+                    )
+                }
+            )
+
+        try:
+            validate_password(
+                new_password,
+                user=user,
+            )
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(
+                {
+                    "new_password": list(exc.messages)
+                }
+            ) from exc
+
+        return attrs

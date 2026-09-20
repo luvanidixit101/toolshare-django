@@ -4,8 +4,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from .services import change_user_password
 
 from .serializers import (
+    ChangePasswordSerializer,
     LoginSerializer,
     LogoutSerializer,
     RegisterSerializer,
@@ -89,6 +91,31 @@ class MeAPIView(APIView):
             {
                 "message": "Profile updated successfully.",
                 "user": response_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class ChangePasswordAPIView(generics.GenericAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        serializer = self.get_serializer(
+            data=request.data,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        change_user_password(
+            user=request.user,
+            new_password=serializer.validated_data["new_password"],
+        )
+
+        return Response(
+            {
+                "message": (
+                    "Password changed successfully. "
+                    "Please login again."
+                )
             },
             status=status.HTTP_200_OK,
         )
