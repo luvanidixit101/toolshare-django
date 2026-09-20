@@ -1,10 +1,15 @@
-from django.shortcuts import render
+# from django.shortcuts import render
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import LoginSerializer,RegisterSerializer
+from .serializers import (
+    LoginSerializer,
+    LogoutSerializer,
+    RegisterSerializer,
+)
 
 
 class RegisterAPIView(generics.CreateAPIView):
@@ -36,4 +41,17 @@ class LoginAPIView(TokenObtainPairView):
     serializer_class = LoginSerializer
     permission_classes = ()
     authentication_classes = () 
+
+
+
+class LogoutAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        serializer = LogoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(
+            status=status.HTTP_204_NO_CONTENT,
+        )
 # Create your views here.
