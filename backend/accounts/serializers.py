@@ -3,9 +3,11 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
+
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
@@ -34,6 +36,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
+
         fields = (
             "id",
             "email",
@@ -43,12 +46,15 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password",
             "password_confirm",
         )
+
         read_only_fields = ("id",)
 
     def validate_email(self, value):
         email = value.strip().lower()
 
-        if User.objects.filter(email__iexact=email).exists():
+        if User.objects.filter(
+            email__iexact=email
+        ).exists():
             raise serializers.ValidationError(
                 "A user with this email already exists."
             )
@@ -57,29 +63,39 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         password = attrs.get("password")
-        password_confirm = attrs.pop("password_confirm", None)
+
+        password_confirm = attrs.pop(
+            "password_confirm",
+            None,
+        )
 
         if password != password_confirm:
             raise serializers.ValidationError(
                 {
                     "password_confirm": (
-                        "Password and confirmation password do not match."
+                        "Password and confirmation "
+                        "password do not match."
                     )
                 }
             )
 
         try:
             validate_password(password)
+
         except DjangoValidationError as exc:
             raise serializers.ValidationError(
-                {"password": list(exc.messages)}
+                {
+                    "password": list(exc.messages)
+                }
             ) from exc
 
         return attrs
 
     @transaction.atomic
     def create(self, validated_data):
-        password = validated_data.pop("password")
+        password = validated_data.pop(
+            "password"
+        )
 
         user = User.objects.create_user(
             password=password,
@@ -87,8 +103,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         return user
-
-
 
 
 class LoginSerializer(TokenObtainPairSerializer):
@@ -101,43 +115,58 @@ class LoginSerializer(TokenObtainPairSerializer):
             "first_name": self.user.first_name,
             "last_name": self.user.last_name,
             "role": self.user.role,
+            "is_email_verified": (
+                self.user.is_email_verified
+            ),
+            "email_verified_at": (
+                self.user.email_verified_at
+            ),
         }
 
         return data
 
 
 class LogoutSerializer(serializers.Serializer):
-    refresh = serializers.CharField(write_only=True)
+    refresh = serializers.CharField(
+        write_only=True
+    )
 
     def validate_refresh(self, value):
         try:
             token = RefreshToken(value)
+
             token.blacklist()
+
         except TokenError as exc:
             raise serializers.ValidationError(
                 "Invalid or expired refresh token."
             ) from exc
 
         return value
-    
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
+
         fields = (
             "id",
             "email",
             "first_name",
             "last_name",
             "role",
+            "is_email_verified",
+            "email_verified_at",
             "date_joined",
         )
+
         read_only_fields = fields
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
+
         fields = (
             "first_name",
             "last_name",
@@ -186,11 +215,21 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context["request"].user
 
-        current_password = attrs["current_password"]
-        new_password = attrs["new_password"]
-        new_password_confirm = attrs["new_password_confirm"]
+        current_password = attrs[
+            "current_password"
+        ]
 
-        if not user.check_password(current_password):
+        new_password = attrs[
+            "new_password"
+        ]
+
+        new_password_confirm = attrs[
+            "new_password_confirm"
+        ]
+
+        if not user.check_password(
+            current_password
+        ):
             raise serializers.ValidationError(
                 {
                     "current_password": (
@@ -199,11 +238,15 @@ class ChangePasswordSerializer(serializers.Serializer):
                 }
             )
 
-        if new_password != new_password_confirm:
+        if (
+            new_password
+            != new_password_confirm
+        ):
             raise serializers.ValidationError(
                 {
                     "new_password_confirm": (
-                        "New password and confirmation password do not match."
+                        "New password and confirmation "
+                        "password do not match."
                     )
                 }
             )
@@ -212,7 +255,8 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {
                     "new_password": (
-                        "New password must be different from the current password."
+                        "New password must be different "
+                        "from the current password."
                     )
                 }
             )
@@ -222,28 +266,38 @@ class ChangePasswordSerializer(serializers.Serializer):
                 new_password,
                 user=user,
             )
+
         except DjangoValidationError as exc:
             raise serializers.ValidationError(
                 {
-                    "new_password": list(exc.messages)
+                    "new_password": list(
+                        exc.messages
+                    )
                 }
             ) from exc
 
         return attrs
 
 
-class PasswordResetRequestSerializer(serializers.Serializer):
+class PasswordResetRequestSerializer(
+    serializers.Serializer
+):
     email = serializers.EmailField()
 
     def validate_email(self, value):
         return value.strip().lower()
 
 
+class PasswordResetConfirmSerializer(
+    serializers.Serializer
+):
+    uid = serializers.CharField(
+        write_only=True
+    )
 
-
-class PasswordResetConfirmSerializer(serializers.Serializer):
-    uid = serializers.CharField(write_only=True)
-    token = serializers.CharField(write_only=True)
+    token = serializers.CharField(
+        write_only=True
+    )
 
     new_password = serializers.CharField(
         write_only=True,
@@ -259,14 +313,24 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         uid = attrs["uid"]
-        new_password = attrs["new_password"]
-        new_password_confirm = attrs["new_password_confirm"]
 
-        if new_password != new_password_confirm:
+        new_password = attrs[
+            "new_password"
+        ]
+
+        new_password_confirm = attrs[
+            "new_password_confirm"
+        ]
+
+        if (
+            new_password
+            != new_password_confirm
+        ):
             raise serializers.ValidationError(
                 {
                     "new_password_confirm": (
-                        "New password and confirmation password do not match."
+                        "New password and confirmation "
+                        "password do not match."
                     )
                 }
             )
@@ -289,7 +353,10 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         ) as exc:
             raise serializers.ValidationError(
                 {
-                    "token": "Invalid or expired password reset link."
+                    "token": (
+                        "Invalid or expired "
+                        "password reset link."
+                    )
                 }
             ) from exc
 
@@ -298,13 +365,27 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
                 new_password,
                 user=user,
             )
+
         except DjangoValidationError as exc:
             raise serializers.ValidationError(
                 {
-                    "new_password": list(exc.messages)
+                    "new_password": list(
+                        exc.messages
+                    )
                 }
             ) from exc
 
         attrs["user"] = user
 
         return attrs
+
+
+class EmailVerificationSerializer(serializers.Serializer):
+    token = serializers.CharField(write_only=True)
+
+
+class ResendEmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.strip().lower()
