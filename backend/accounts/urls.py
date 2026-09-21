@@ -6,6 +6,7 @@ from .views import (
     LoginAPIView,
     LogoutAPIView,
     MeAPIView,
+    PasswordResetConfirmAPIView,
     PasswordResetRequestAPIView,
     RegisterAPIView,
 )
@@ -51,4 +52,10 @@ urlpatterns = [
         PasswordResetRequestAPIView.as_view(),
          name="password-reset-request",
     ),
+
+    path(
+    "password-reset/confirm/",
+    PasswordResetConfirmAPIView.as_view(),
+    name="password-reset-confirm",
+),
 ]

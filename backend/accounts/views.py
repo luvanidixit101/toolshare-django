@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .services import (
     change_user_password,
+    confirm_password_reset,
     request_password_reset,
 )
 
@@ -14,6 +15,7 @@ from .serializers import (
     ChangePasswordSerializer,
     LoginSerializer,
     LogoutSerializer,
+    PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     RegisterSerializer,
     UserProfileSerializer,
@@ -144,6 +146,46 @@ class PasswordResetRequestAPIView(generics.GenericAPIView):
                 "message": (
                     "If an account exists with this email, "
                     "password reset instructions have been sent."
+                )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmAPIView(generics.GenericAPIView):
+    serializer_class = PasswordResetConfirmSerializer
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request):
+        serializer = self.get_serializer(
+            data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+
+        success = confirm_password_reset(
+            user=serializer.validated_data["user"],
+            token=serializer.validated_data["token"],
+            new_password=serializer.validated_data[
+                "new_password"
+            ],
+        )
+
+        if not success:
+            return Response(
+                {
+                    "token": [
+                        "Invalid or expired password reset link."
+                    ]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                "message": (
+                    "Password reset successfully. "
+                    "Please login with your new password."
                 )
             },
             status=status.HTTP_200_OK,

@@ -64,3 +64,18 @@ def request_password_reset(*, email):
         recipient_list=[user.email],
         fail_silently=False,
     )   
+
+
+def confirm_password_reset(*, user, token, new_password):
+    if not default_token_generator.check_token(
+        user,
+        token,
+    ):
+        return False
+
+    change_user_password(
+        user=user,
+        new_password=new_password,
+    )
+
+    return True

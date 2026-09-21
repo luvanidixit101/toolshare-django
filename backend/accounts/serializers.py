@@ -1,6 +1,8 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.exceptions import TokenError
@@ -235,3 +237,74 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         return value.strip().lower()
+
+
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField(write_only=True)
+    token = serializers.CharField(write_only=True)
+
+    new_password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+
+    new_password_confirm = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        style={"input_type": "password"},
+    )
+
+    def validate(self, attrs):
+        uid = attrs["uid"]
+        new_password = attrs["new_password"]
+        new_password_confirm = attrs["new_password_confirm"]
+
+        if new_password != new_password_confirm:
+            raise serializers.ValidationError(
+                {
+                    "new_password_confirm": (
+                        "New password and confirmation password do not match."
+                    )
+                }
+            )
+
+        try:
+            user_id = force_str(
+                urlsafe_base64_decode(uid)
+            )
+
+            user = User.objects.get(
+                pk=user_id,
+                is_active=True,
+            )
+
+        except (
+            TypeError,
+            ValueError,
+            OverflowError,
+            User.DoesNotExist,
+        ) as exc:
+            raise serializers.ValidationError(
+                {
+                    "token": "Invalid or expired password reset link."
+                }
+            ) from exc
+
+        try:
+            validate_password(
+                new_password,
+                user=user,
+            )
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(
+                {
+                    "new_password": list(exc.messages)
+                }
+            ) from exc
+
+        attrs["user"] = user
+
+        return attrs
