@@ -182,3 +182,30 @@ class ToolDetailSerializer(serializers.ModelSerializer):
         )
 
         read_only_fields = fields
+
+class MyToolSerializer(serializers.ModelSerializer):
+    category = ToolCategorySerializer(
+        read_only=True,
+    )
+
+    class Meta:
+        model = Tool
+        fields = (
+            "id",
+            "category",
+            "title",
+            "description",
+            "price_per_day",
+            "security_deposit",
+            "condition",
+            "status",
+            "address",
+            "city",
+            "latitude",
+            "longitude",
+            "is_available",
+            "created_at",
+            "updated_at",
+        )
+
+        read_only_fields = fields

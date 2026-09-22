@@ -5,6 +5,7 @@ from .models import Category, Tool
 from .permissions import IsOwner
 from .serializers import (
     CategorySerializer,
+     MyToolSerializer,
     ToolCreateSerializer,
     ToolDetailSerializer,
     ToolListSerializer,
@@ -74,6 +75,25 @@ class ToolDetailAPIView(generics.RetrieveAPIView):
             )
             .select_related(
                 "owner",
+                "category",
+            )
+        )
+
+
+class MyToolListAPIView(generics.ListAPIView):
+    serializer_class = MyToolSerializer
+    permission_classes = (
+        IsAuthenticated,
+        IsOwner,
+    )
+
+    def get_queryset(self):
+        return (
+            Tool.objects
+            .filter(
+                owner=self.request.user,
+            )
+            .select_related(
                 "category",
             )
         )
