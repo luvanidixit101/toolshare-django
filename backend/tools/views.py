@@ -6,6 +6,7 @@ from .permissions import IsOwner
 from .serializers import (
     CategorySerializer,
     ToolCreateSerializer,
+    ToolDetailSerializer,
     ToolListSerializer,
 )
 
@@ -55,4 +56,24 @@ class ToolListCreateAPIView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(
             owner=self.request.user
+        )
+
+
+class ToolDetailAPIView(generics.RetrieveAPIView):
+    serializer_class = ToolDetailSerializer
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def get_queryset(self):
+        return (
+            Tool.objects
+            .filter(
+                status=Tool.Status.ACTIVE,
+                category__is_active=True,
+                owner__is_active=True,
+            )
+            .select_related(
+                "owner",
+                "category",
+            )
         )
