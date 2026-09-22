@@ -5,6 +5,7 @@ from .views import (
     MyToolListAPIView,
     ToolDetailAPIView,
     ToolListCreateAPIView,
+    ToolUpdateAPIView,
 )
 
 
@@ -26,6 +27,12 @@ urlpatterns = [
         "mine/",
         MyToolListAPIView.as_view(),
         name="my-tool-list",
+    ),
+    
+    path(
+        "<int:pk>/manage/",
+        ToolUpdateAPIView.as_view(),
+        name="tool-update",
     ),
 
     path(

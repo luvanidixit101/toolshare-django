@@ -209,3 +209,83 @@ class MyToolSerializer(serializers.ModelSerializer):
         )
 
         read_only_fields = fields
+
+
+class ToolUpdateSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.filter(is_active=True),
+        required=False,
+    )
+
+    class Meta:
+        model = Tool
+        fields = (
+            "category",
+            "title",
+            "description",
+            "price_per_day",
+            "security_deposit",
+            "condition",
+            "status",
+            "address",
+            "city",
+            "latitude",
+            "longitude",
+            "is_available",
+        )
+
+    def validate_title(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "Tool title cannot be empty."
+            )
+
+        return value
+
+    def validate_description(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "Tool description cannot be empty."
+            )
+
+        return value
+
+    def validate_address(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "Address cannot be empty."
+            )
+
+        return value
+
+    def validate_city(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "City cannot be empty."
+            )
+
+        return value
+
+    def validate_latitude(self, value):
+        if value is not None and not (-90 <= value <= 90):
+            raise serializers.ValidationError(
+                "Latitude must be between -90 and 90."
+            )
+
+        return value
+
+    def validate_longitude(self, value):
+        if value is not None and not (-180 <= value <= 180):
+            raise serializers.ValidationError(
+                "Longitude must be between -180 and 180."
+            )
+
+        return value

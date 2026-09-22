@@ -9,6 +9,7 @@ from .serializers import (
     ToolCreateSerializer,
     ToolDetailSerializer,
     ToolListSerializer,
+    ToolUpdateSerializer,
 )
 
 
@@ -97,3 +98,23 @@ class MyToolListAPIView(generics.ListAPIView):
                 "category",
             )
         )
+
+
+class ToolUpdateAPIView(generics.UpdateAPIView):
+    serializer_class = ToolUpdateSerializer
+    permission_classes = (
+        IsAuthenticated,
+        IsOwner,
+    )
+
+    http_method_names = (
+        "patch",
+        "options",
+        "head",
+    )
+
+    def get_queryset(self):
+        return Tool.objects.filter(
+            owner=self.request.user,
+        )
+
